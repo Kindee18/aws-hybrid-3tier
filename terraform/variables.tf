@@ -18,6 +18,10 @@ variable "environment" {
   description = "Environment (dev, staging, prod)"
   type        = string
   default     = "dev"
+  validation {
+    condition     = contains(["dev", "staging", "prod"], var.environment)
+    error_message = "Environment must be dev, staging, or prod."
+  }
 }
 
 variable "instance_type" {
@@ -30,4 +34,14 @@ variable "db_password" {
   description = "RDS master password"
   type        = string
   sensitive   = true
+  validation {
+    condition     = length(var.db_password) >= 16
+    error_message = "db_password must be at least 16 characters long."
+  }
+}
+
+variable "vpc_cidr" {
+  description = "VPC CIDR block"
+  type        = string
+  default     = "10.0.0.0/16"
 }
