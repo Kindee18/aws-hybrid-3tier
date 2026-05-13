@@ -1,2 +1,23 @@
-# aws-hybrid-3tier
-Part 1 of Cloud Engineering Tools Mastery Series — Production-grade Hybrid 3-Tier + Serverless architecture on AWS using Terraform. Features multi-environment (dev/staging/prod), remote state, full networking, ALB + EC2 autoscaling, RDS, API Gateway + Lambda, and best-practice IaC. Foundation for the entire series.
+# Cloud Engineering Tools Series - Project 1
+
+**Hybrid Multi-Environment 3-Tier + Serverless Platform on AWS (Terraform)**
+
+Part 1 of the Cloud Engineering Tools Mastery Series.
+
+## Architecture
+- Custom VPC (multi-AZ)
+- Application Load Balancer + EC2 Auto Scaling Group (Flask API)
+- RDS PostgreSQL + DynamoDB
+- API Gateway + Lambda (serverless extension)
+- S3 + CloudFront
+- Multi-environment support (dev/staging/prod via workspaces)
+- Remote state with S3 + DynamoDB locking
+
+## Quick Start
+1. `terraform init`
+2. `terraform workspace new dev`
+3. `terraform apply -var-file=environments/dev.tfvars`
+
+See `DEPLOY.md` for full instructions.
+
+**Built as foundation for Docker, K8s, CI/CD, and Observability in future projects.**
