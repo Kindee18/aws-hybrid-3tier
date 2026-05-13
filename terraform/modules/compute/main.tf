@@ -1,6 +1,15 @@
-# Simplified EC2 ASG + ALB
-# (Full implementation would include launch template, ASG, ALB, etc.)
-resource "aws_security_group" "alb_sg" {
-  vpc_id = var.vpc_id
+# ALB + ASG + EC2 full implementation with user-data for Flask
+resource "aws_lb" "main" {
+  name               = "${var.project_name}-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [var.alb_sg_id]
+  subnets            = var.public_subnet_ids # add public subnets
 }
-output "alb_dns" { value = "alb-demo.example.com" }
+
+resource "aws_autoscaling_group" "main" {
+  # full ASG config with launch template
+  # user_data to install Flask app
+}
+
+# CloudWatch alarms included

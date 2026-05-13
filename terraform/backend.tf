@@ -1,9 +1,9 @@
 terraform {
   backend "s3" {
-    bucket         = "terraform-state-hybrid-3tier-${var.environment}"
-    key            = "terraform.tfstate"
-    region         = "us-east-1"
-    dynamodb_table = "terraform-locks-hybrid-3tier"
+    bucket         = "${var.project_name}-terraform-state-${var.aws_region}"
+    key            = "${terraform.workspace}/terraform.tfstate"
+    region         = var.aws_region
     encrypt        = true
+    use_lockfile   = true
   }
 }

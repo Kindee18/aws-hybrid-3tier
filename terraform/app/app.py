@@ -1,5 +1,13 @@
 from flask import Flask
 app = Flask(__name__)
+
 @app.route('/')
-def home(): return 'Hello from EC2 in Hybrid 3-Tier!'
-if __name__ == '__main__': app.run(host='0.0.0.0', port=80)
+def home():
+    return 'Hybrid 3-Tier App Running!'
+
+@app.route('/health')
+def health():
+    return 'OK'
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=80)

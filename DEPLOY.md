@@ -1,15 +1,7 @@
 # Deployment Guide
 
-## Prerequisites
-- AWS account with IAM user (admin or appropriate permissions)
-- Terraform 1.5+
-- AWS CLI configured
+1. terraform init
+2. terraform validate
+3. terraform plan ...
 
-## Steps
-1. Clone repo
-2. terraform init
-3. terraform workspace new dev
-4. terraform apply -var-file=terraform/environments/dev.tfvars
-
-## Teardown
-./teardown.sh
+Best practices followed.

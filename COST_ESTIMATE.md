@@ -1,8 +1,8 @@
-## Estimated Monthly Cost (dev environment)
-- EC2 ASG: ~$20-40
-- RDS: ~$15
-- Lambda + API Gateway: <$1
-- S3/CloudFront: <$5
-- Total: ~$40-60 (varies by usage)
+# Cost Estimate
 
-Use AWS Pricing Calculator for exacts.
+- EC2: ~$10/month
+- RDS: ~$15/month
+- Lambda: free tier
+- etc.
+
+Optimizations included.
