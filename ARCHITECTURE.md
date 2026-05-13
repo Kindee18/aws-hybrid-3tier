@@ -3,10 +3,10 @@
 ```mermaid
 graph TD
     A[Internet] --> B[ALB]
-    B --> C[EC2 Auto Scaling]
+    B --> C[EC2 ASG - Flask App]
     C --> D[RDS PostgreSQL]
     C --> E[API Gateway + Lambda]
-    F[S3 + CloudFront] --> A
+    B --> F[CloudFront + S3]
 ```
 
-Full hybrid 3-tier + serverless design with best practices.
+Full hybrid 3-tier + serverless.

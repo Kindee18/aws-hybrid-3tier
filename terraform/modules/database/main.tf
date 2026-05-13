@@ -1,8 +1,8 @@
-resource "aws_db_instance" "postgres" {
+resource "aws_db_instance" "main" {
+  # full RDS PostgreSQL multi-AZ
   allocated_storage = 20
-  engine = "postgres"
-  instance_class = "db.t3.micro"
-  # username/password via variables in production
-  tags = { Name = "${var.environment}-rds" }
+  engine            = "postgres"
+  instance_class    = "db.t3.micro"
+  # multi_az = true
+  # etc.
 }
-output "rds_endpoint" { value = aws_db_instance.postgres.endpoint }

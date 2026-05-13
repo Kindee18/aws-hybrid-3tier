@@ -1,3 +1,4 @@
-region = "us-east-1"
+aws_region = "us-east-1"
+project_name = "hybrid-3tier"
 environment = "staging"
-vpc_cidr = "10.0.0.0/16"
+db_password = "SuperSecretPass123!"

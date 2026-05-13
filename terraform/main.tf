@@ -1,48 +1,50 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
+module "tags" {
+  source = "./modules/tags"
 
-provider "aws" {
-  region = var.region
+  environment = var.environment
+  project     = var.project_name
 }
-
-# Backend is configured in backend.tf
 
 module "networking" {
   source = "./modules/networking"
-  vpc_cidr = var.vpc_cidr
-  environment = var.environment
+
+  project_name = var.project_name
+  environment  = var.environment
+  vpc_cidr     = "10.0.0.0/16"
 }
 
 module "compute" {
   source = "./modules/compute"
-  vpc_id = module.networking.vpc_id
-  public_subnets = module.networking.public_subnets
-  environment = var.environment
+
+  project_name = var.project_name
+  environment  = var.environment
+  vpc_id       = module.networking.vpc_id
+  subnet_ids   = module.networking.private_subnet_ids
+  alb_sg_id    = module.networking.alb_sg_id
+  app_sg_id    = module.networking.app_sg_id
+  instance_type = var.instance_type
 }
 
 module "database" {
   source = "./modules/database"
-  vpc_id = module.networking.vpc_id
-  private_subnets = module.networking.private_subnets
-  environment = var.environment
+
+  project_name = var.project_name
+  environment  = var.environment
+  vpc_id       = module.networking.vpc_id
+  subnet_ids   = module.networking.database_subnet_ids
+  app_sg_id    = module.networking.app_sg_id
 }
 
 module "serverless" {
   source = "./modules/serverless"
-  environment = var.environment
+
+  project_name = var.project_name
+  environment  = var.environment
 }
 
 module "storage" {
   source = "./modules/storage"
-  environment = var.environment
-}
 
-output "alb_dns" {
-  value = module.compute.alb_dns
+  project_name = var.project_name
+  environment  = var.environment
 }
