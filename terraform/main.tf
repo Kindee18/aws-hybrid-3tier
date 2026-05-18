@@ -76,3 +76,11 @@ module "observability" {
   asg_name       = module.compute.blue_asg_name # Defaulting to blue
   common_tags    = module.tags.common_tags
 }
+
+module "governance" {
+  source = "./modules/governance"
+
+  project_name = var.project_name
+  environment  = var.environment
+  common_tags  = module.tags.common_tags
+}
