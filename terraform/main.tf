@@ -65,3 +65,14 @@ module "management" {
   subnet_id    = module.networking.private_subnet_ids[0] # Place in the first private subnet
   common_tags  = module.tags.common_tags
 }
+
+module "observability" {
+  source = "./modules/observability"
+
+  project_name   = var.project_name
+  environment    = var.environment
+  alb_arn_suffix = module.compute.alb_arn_suffix
+  db_instance_id = module.database.db_instance_id
+  asg_name       = module.compute.asg_name
+  common_tags    = module.tags.common_tags
+}
