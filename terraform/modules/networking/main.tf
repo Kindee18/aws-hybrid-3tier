@@ -78,7 +78,7 @@ resource "aws_subnet" "public" {
 resource "aws_subnet" "private" {
   count             = length(data.aws_availability_zones.available.names)
   vpc_id            = aws_vpc.main.id
-  cidr_block        = cidrsubnet(var.vpc_cidr, 8, count.index + 3)
+  cidr_block        = cidrsubnet(var.vpc_cidr, 8, count.index + 20) # Increased offset
   availability_zone = data.aws_availability_zones.available.names[count.index]
   tags              = merge(var.common_tags, { Name = "private-${count.index}" })
 }
@@ -86,7 +86,7 @@ resource "aws_subnet" "private" {
 resource "aws_subnet" "database" {
   count             = length(data.aws_availability_zones.available.names)
   vpc_id            = aws_vpc.main.id
-  cidr_block        = cidrsubnet(var.vpc_cidr, 8, count.index + 6)
+  cidr_block        = cidrsubnet(var.vpc_cidr, 8, count.index + 40) # Increased offset
   availability_zone = data.aws_availability_zones.available.names[count.index]
   tags              = merge(var.common_tags, { Name = "db-${count.index}" })
 }

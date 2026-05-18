@@ -1,13 +1,13 @@
 provider "aws" {
   region = var.aws_region
 
-  # Allow local testing/mocking
+  access_key = "test"
+  secret_key = "test"
+
   skip_credentials_validation = true
   skip_requesting_account_id  = true
   skip_metadata_api_check     = true
 
-  # Endpoints for LocalStack (uncomment to test locally)
-  /*
   endpoints {
     apigateway     = "http://localhost:4566"
     apigatewayv2   = "http://localhost:4566"
@@ -17,7 +17,6 @@ provider "aws" {
     ec2            = "http://localhost:4566"
     elbv2          = "http://localhost:4566"
     iam            = "http://localhost:4566"
-    kinesis        = "http://localhost:4566"
     lambda         = "http://localhost:4566"
     rds            = "http://localhost:4566"
     route53        = "http://localhost:4566"
@@ -30,10 +29,5 @@ provider "aws" {
     sts            = "http://localhost:4566"
     waf            = "http://localhost:4566"
     wafv2          = "http://localhost:4566"
-  }
-  */
-
-  default_tags {
-    tags = module.tags.common_tags
   }
 }
