@@ -10,3 +10,5 @@ __pycache__/
 *.pyc
 *.zip
 *.bak
+tfplan
+final_logic_trace
