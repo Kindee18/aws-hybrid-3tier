@@ -9,8 +9,9 @@ resource "aws_lb" "main" {
   tags = var.common_tags
 }
 
-resource "aws_lb_target_group" "main" {
-  name        = "${var.project_name}-tg"
+# Target Group - BLUE
+resource "aws_lb_target_group" "blue" {
+  name        = "${var.project_name}-tg-blue"
   port        = 80
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
@@ -24,7 +25,26 @@ resource "aws_lb_target_group" "main" {
     unhealthy_threshold = 2
   }
 
-  tags = var.common_tags
+  tags = merge(var.common_tags, { Tier = "Blue" })
+}
+
+# Target Group - GREEN
+resource "aws_lb_target_group" "green" {
+  name        = "${var.project_name}-tg-green"
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = var.vpc_id
+  target_type = "instance"
+
+  health_check {
+    path                = "/health"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+  }
+
+  tags = merge(var.common_tags, { Tier = "Green" })
 }
 
 resource "aws_lb_listener" "http" {
@@ -33,8 +53,21 @@ resource "aws_lb_listener" "http" {
   protocol          = "HTTP"
 
   default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.main.arn
+    type = "forward"
+    forward {
+      target_group {
+        arn    = aws_lb_target_group.blue.arn
+        weight = 100 # Change weights for Blue/Green or Canary
+      }
+      target_group {
+        arn    = aws_lb_target_group.green.arn
+        weight = 0
+      }
+      stickiness {
+        enabled  = false
+        duration = 3600
+      }
+    }
   }
 }
 
@@ -85,10 +118,11 @@ resource "aws_launch_template" "main" {
   tags = var.common_tags
 }
 
-resource "aws_autoscaling_group" "main" {
-  name                = "${var.project_name}-asg"
+# ASG - BLUE
+resource "aws_autoscaling_group" "blue" {
+  name                = "${var.project_name}-asg-blue"
   vpc_zone_identifier = var.private_subnet_ids
-  target_group_arns   = [aws_lb_target_group.main.arn]
+  target_group_arns   = [aws_lb_target_group.blue.arn]
   min_size            = 2
   max_size            = 4
   desired_capacity    = 2
@@ -100,7 +134,28 @@ resource "aws_autoscaling_group" "main" {
 
   tag {
     key                 = "Name"
-    value               = "${var.project_name}-app"
+    value               = "${var.project_name}-app-blue"
+    propagate_at_launch = true
+  }
+}
+
+# ASG - GREEN
+resource "aws_autoscaling_group" "green" {
+  name                = "${var.project_name}-asg-green"
+  vpc_zone_identifier = var.private_subnet_ids
+  target_group_arns   = [aws_lb_target_group.green.arn]
+  min_size            = 0 # Green can be 0 when not deploying
+  max_size            = 4
+  desired_capacity    = 0
+
+  launch_template {
+    id      = aws_launch_template.main.id
+    version = "$Latest"
+  }
+
+  tag {
+    key                 = "Name"
+    value               = "${var.project_name}-app-green"
     propagate_at_launch = true
   }
 }

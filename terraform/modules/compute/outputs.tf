@@ -6,6 +6,10 @@ output "alb_arn_suffix" {
   value = aws_lb.main.arn_suffix
 }
 
-output "asg_name" {
-  value = aws_autoscaling_group.main.name
+output "blue_asg_name" {
+  value = aws_autoscaling_group.blue.name
+}
+
+output "green_asg_name" {
+  value = aws_autoscaling_group.green.name
 }

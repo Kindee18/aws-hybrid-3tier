@@ -73,6 +73,6 @@ module "observability" {
   environment    = var.environment
   alb_arn_suffix = module.compute.alb_arn_suffix
   db_instance_id = module.database.db_instance_id
-  asg_name       = module.compute.asg_name
+  asg_name       = module.compute.blue_asg_name # Defaulting to blue
   common_tags    = module.tags.common_tags
 }
