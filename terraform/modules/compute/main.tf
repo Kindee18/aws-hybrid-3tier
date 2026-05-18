@@ -91,6 +91,11 @@ resource "aws_launch_template" "main" {
   image_id      = data.aws_ami.amazon_linux_2023.id
   instance_type = var.instance_type
 
+  # Spot Instance Optimization for Non-Prod
+  instance_market_options {
+    market_type = var.environment == "prod" ? null : "spot"
+  }
+
   network_interfaces {
     associate_public_ip_address = false
     security_groups             = [var.app_sg_id]

@@ -93,15 +93,15 @@ resource "aws_subnet" "database" {
 
 # NAT Gateway and EIP for private subnets
 resource "aws_eip" "nat" {
-  count = length(data.aws_availability_zones.available.names)
+  count = var.environment == "prod" ? length(data.aws_availability_zones.available.names) : 1
   tags  = var.common_tags
 }
 
 resource "aws_nat_gateway" "main" {
-  count         = length(data.aws_availability_zones.available.names)
+  count         = var.environment == "prod" ? length(data.aws_availability_zones.available.names) : 1
   allocation_id = aws_eip.nat[count.index].id
   subnet_id     = aws_subnet.public[count.index].id
-  tags          = var.common_tags
+  tags          = merge(var.common_tags, { Name = "nat-${count.index}" })
 }
 
 # Route Tables
@@ -126,7 +126,7 @@ resource "aws_route" "private_nat" {
   count                  = length(data.aws_availability_zones.available.names)
   route_table_id         = aws_route_table.private[count.index].id
   destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = aws_nat_gateway.main[count.index].id
+  nat_gateway_id         = var.environment == "prod" ? aws_nat_gateway.main[count.index].id : aws_nat_gateway.main[0].id
 }
 
 # Route Table Associations
