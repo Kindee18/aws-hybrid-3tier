@@ -4,7 +4,8 @@
 .terraform.lock.hcl
 crash.log
 *.tfvars
-!environments/*.tfvars
 .DS_Store
 __pycache__/
 *.pyc
+*.zip
+*.bak
