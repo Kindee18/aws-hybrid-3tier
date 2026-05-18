@@ -20,5 +20,11 @@ resource "aws_db_instance" "main" {
   multi_az             = var.environment == "prod" ? true : false
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 
+  # Production Hardening
+  deletion_protection      = var.environment == "prod" ? true : false
+  performance_insights_enabled = true
+  backup_retention_period  = 7
+  copy_tags_to_snapshot    = true
+
   tags = var.common_tags
 }

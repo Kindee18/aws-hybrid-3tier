@@ -49,6 +49,12 @@ resource "aws_iam_role_policy_attachment" "lambda_basic" {
   role       = aws_iam_role.lambda.name
 }
 
+resource "aws_cloudwatch_log_group" "lambda" {
+  name              = "/aws/lambda/${var.project_name}-function"
+  retention_in_days = 7
+  tags              = var.common_tags
+}
+
 resource "aws_lambda_function" "main" {
   filename         = data.archive_file.lambda.output_path
   function_name    = "${var.project_name}-function"
@@ -56,6 +62,8 @@ resource "aws_lambda_function" "main" {
   handler          = "index.handler"
   runtime          = "python3.9"
   source_code_hash = data.archive_file.lambda.output_base64sha256
+
+  depends_on = [aws_cloudwatch_log_group.lambda]
 
   tags = var.common_tags
 }

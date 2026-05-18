@@ -33,3 +33,8 @@ variable "instance_type" {
 variable "common_tags" {
   type = map(string)
 }
+
+variable "waf_acl_arn" {
+  type        = string
+  description = "The ARN of the WAF Web ACL to associate with the ALB"
+}

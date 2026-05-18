@@ -9,6 +9,11 @@ resource "aws_lb" "main" {
   tags = var.common_tags
 }
 
+resource "aws_wafv2_web_acl_association" "main" {
+  resource_arn = aws_lb.main.arn
+  web_acl_arn  = var.waf_acl_arn
+}
+
 # Target Group - BLUE
 resource "aws_lb_target_group" "blue" {
   name        = "${var.project_name}-tg-blue"

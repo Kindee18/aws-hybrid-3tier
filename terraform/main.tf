@@ -26,6 +26,7 @@ module "compute" {
   app_sg_id          = module.networking.app_sg_id
   instance_type      = var.instance_type
   common_tags        = module.tags.common_tags
+  waf_acl_arn        = module.networking.waf_acl_arn
 }
 
 module "database" {
