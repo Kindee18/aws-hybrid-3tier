@@ -2,12 +2,12 @@ data "aws_availability_zones" "available" {}
 
 resource "aws_vpc" "main" {
   cidr_block = var.vpc_cidr
-  tags       = module.tags.common_tags
+  tags       = var.common_tags
 }
 
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
-  tags   = module.tags.common_tags
+  tags   = var.common_tags
 }
 
 # Multi-AZ Public, Private, Database subnets
@@ -17,7 +17,7 @@ resource "aws_subnet" "public" {
   cidr_block              = cidrsubnet(var.vpc_cidr, 8, count.index)
   availability_zone       = data.aws_availability_zones.available.names[count.index]
   map_public_ip_on_launch = true
-  tags                    = merge(module.tags.common_tags, { Name = "public-${count.index}" })
+  tags                    = merge(var.common_tags, { Name = "public-${count.index}" })
 }
 
 resource "aws_subnet" "private" {
@@ -25,7 +25,7 @@ resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = cidrsubnet(var.vpc_cidr, 8, count.index + 3)
   availability_zone = data.aws_availability_zones.available.names[count.index]
-  tags              = merge(module.tags.common_tags, { Name = "private-${count.index}" })
+  tags              = merge(var.common_tags, { Name = "private-${count.index}" })
 }
 
 resource "aws_subnet" "database" {
@@ -33,26 +33,26 @@ resource "aws_subnet" "database" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = cidrsubnet(var.vpc_cidr, 8, count.index + 6)
   availability_zone = data.aws_availability_zones.available.names[count.index]
-  tags              = merge(module.tags.common_tags, { Name = "db-${count.index}" })
+  tags              = merge(var.common_tags, { Name = "db-${count.index}" })
 }
 
 # NAT Gateway and EIP for private subnets
 resource "aws_eip" "nat" {
   count = length(data.aws_availability_zones.available.names)
-  tags  = module.tags.common_tags
+  tags  = var.common_tags
 }
 
 resource "aws_nat_gateway" "main" {
   count         = length(data.aws_availability_zones.available.names)
   allocation_id = aws_eip.nat[count.index].id
   subnet_id     = aws_subnet.public[count.index].id
-  tags          = module.tags.common_tags
+  tags          = var.common_tags
 }
 
 # Route Tables
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
-  tags   = module.tags.common_tags
+  tags   = var.common_tags
 }
 
 resource "aws_route" "public_internet" {
@@ -64,7 +64,7 @@ resource "aws_route" "public_internet" {
 resource "aws_route_table" "private" {
   count  = length(data.aws_availability_zones.available.names)
   vpc_id = aws_vpc.main.id
-  tags   = module.tags.common_tags
+  tags   = var.common_tags
 }
 
 resource "aws_route" "private_nat" {
@@ -98,7 +98,7 @@ resource "aws_security_group" "alb" {
   name        = "${var.project_name}-alb-sg"
   vpc_id      = aws_vpc.main.id
   description = "ALB Security Group"
-  tags        = module.tags.common_tags
+  tags        = var.common_tags
 }
 
 resource "aws_vpc_security_group_ingress_rule" "alb_http" {
@@ -122,7 +122,7 @@ resource "aws_security_group" "app" {
   name        = "${var.project_name}-app-sg"
   vpc_id      = aws_vpc.main.id
   description = "App EC2 Security Group"
-  tags        = module.tags.common_tags
+  tags        = var.common_tags
 }
 
 resource "aws_vpc_security_group_ingress_rule" "app_from_alb" {
@@ -138,7 +138,7 @@ resource "aws_security_group" "database" {
   name        = "${var.project_name}-db-sg"
   vpc_id      = aws_vpc.main.id
   description = "RDS Security Group"
-  tags        = module.tags.common_tags
+  tags        = var.common_tags
 }
 
 resource "aws_vpc_security_group_ingress_rule" "db_from_app" {
@@ -162,7 +162,7 @@ resource "aws_wafv2_web_acl" "main" {
     metric_name                = "${var.project_name}-waf"
     sampled_requests_enabled   = true
   }
-  tags = module.tags.common_tags
+  tags = var.common_tags
 }
 
 # Outputs for downstream modules

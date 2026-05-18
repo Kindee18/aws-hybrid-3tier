@@ -10,29 +10,34 @@ module "networking" {
 
   project_name = var.project_name
   environment  = var.environment
-  vpc_cidr     = "10.0.0.0/16"
+  vpc_cidr     = var.vpc_cidr
+  common_tags  = module.tags.common_tags
 }
 
 module "compute" {
   source = "./modules/compute"
 
-  project_name = var.project_name
-  environment  = var.environment
-  vpc_id       = module.networking.vpc_id
-  subnet_ids   = module.networking.private_subnet_ids
-  alb_sg_id    = module.networking.alb_sg_id
-  app_sg_id    = module.networking.app_sg_id
-  instance_type = var.instance_type
+  project_name       = var.project_name
+  environment        = var.environment
+  vpc_id             = module.networking.vpc_id
+  public_subnet_ids  = module.networking.public_subnet_ids
+  private_subnet_ids = module.networking.private_subnet_ids
+  alb_sg_id          = module.networking.alb_sg_id
+  app_sg_id          = module.networking.app_sg_id
+  instance_type      = var.instance_type
+  common_tags        = module.tags.common_tags
 }
 
 module "database" {
   source = "./modules/database"
 
-  project_name = var.project_name
-  environment  = var.environment
-  vpc_id       = module.networking.vpc_id
-  subnet_ids   = module.networking.database_subnet_ids
-  app_sg_id    = module.networking.app_sg_id
+  project_name   = var.project_name
+  environment    = var.environment
+  vpc_id         = module.networking.vpc_id
+  subnet_ids     = module.networking.database_subnet_ids
+  database_sg_id = module.networking.database_sg_id
+  db_password    = var.db_password
+  common_tags    = module.tags.common_tags
 }
 
 module "serverless" {
@@ -40,6 +45,7 @@ module "serverless" {
 
   project_name = var.project_name
   environment  = var.environment
+  common_tags  = module.tags.common_tags
 }
 
 module "storage" {
@@ -47,4 +53,5 @@ module "storage" {
 
   project_name = var.project_name
   environment  = var.environment
+  common_tags  = module.tags.common_tags
 }
