@@ -1,84 +1,124 @@
-# Production-Grade Hybrid 3-Tier + Serverless Platform (AWS/Terraform)
+# AWS Hybrid 3-Tier + Serverless Platform (Architect-Level)
 
 ![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)
 ![Terraform](https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white)
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)
 
-This repository contains a **High-Availability, Architect-Level Hybrid Infrastructure** deployed via Terraform. It seamlessly integrates a traditional 3-tier web application (EC2/ASG/RDS) with a modern serverless API (Lambda/API Gateway), protected by enterprise-grade security and automated governance.
+This repository demonstrates a **Production-Grade Hybrid Infrastructure** deployed via Terraform. It features a hardened, high-availability architecture that bridges traditional 3-tier web applications with modern serverless components and automated governance.
 
-## 🏗️ Architecture Overview
+## 📐 Architecture Diagram
 
-The platform is designed for **100% High Availability** and follows the **AWS Well-Architected Framework**.
+```mermaid
+graph TD
+    subgraph Public_Internet
+        User[End User]
+    end
 
-*   **Networking Tier**: 1 VPC with **18 Subnets** distributed across 6 Availability Zones (Public, Private, Database).
-*   **Compute Tier**: 
-    *   **Traditional**: Flask Application running on an Auto Scaling Group (ASG) behind an Application Load Balancer (ALB).
-    *   **Serverless**: Python Lambda function integrated with an HTTP API Gateway.
-*   **Database Tier**: Multi-AZ RDS PostgreSQL instance with automated backups and deletion protection.
-*   **Storage Tier**: Private S3 Bucket for static assets, served via **CloudFront** with **Origin Access Control (OAC)**.
-*   **Management Tier**: Zero-Trust **SSM Bastion** host with no open SSH ports.
+    subgraph AWS_Cloud
+        subgraph Edge_Security
+            WAF[AWS WAF]
+            CF[CloudFront]
+        end
 
-## 🌟 Architect-Level Features
+        subgraph VPC_10.0.0.0_16
+            subgraph Public_Subnets_6_AZs
+                ALB[Application Load Balancer]
+                NAT[NAT Gateways x6]
+            end
 
-What makes this project different from basic tutorials:
+            subgraph Private_App_Subnets_6_AZs
+                ASG_B[ASG - Blue Fleet]
+                ASG_G[ASG - Green Fleet]
+                Bastion[SSM Bastion - Zero Trust]
+            end
 
-### 1. **Zero-Trust Management (SSM)**
-Administrative access is handled through **AWS Systems Manager (SSM)**. The Bastion host sits in a private subnet with **zero inbound security group rules**. All traffic stays on the AWS backbone via **VPC Interface Endpoints**.
+            subgraph Private_DB_Subnets_6_AZs
+                RDS[Multi-AZ RDS PostgreSQL]
+            end
 
-### 2. **Self-Healing Governance (AWS Config + Lambda)**
-Implemented **Governance-as-Code**. An AWS Config rule monitors Security Groups for unauthorized SSH exposure (Port 22). If a violation is detected, a **Remediation Lambda** automatically deletes the non-compliant rule within milliseconds.
+            subgraph VPC_Endpoints
+                SSM_VPCE[SSM Interface Endpoints]
+            end
+        end
 
-### 3. **Blue/Green & Canary Deployments**
-The compute tier supports zero-downtime releases using **Weighted ALB Routing**. You can shift traffic incrementally (e.g., 90% Blue / 10% Green) to test new versions before full commitment.
+        subgraph Serverless_Tier
+            AGW[API Gateway]
+            Lambda[Python Lambda]
+        end
 
-### 4. **Operational Observability**
-A comprehensive **CloudWatch Operations Dashboard** provides real-time telemetry for:
-*   ALB Request Count & 5XX Error rates.
-*   P99 Target Response Latency.
-*   ASG Instance Health (Desired vs. In-Service).
-*   RDS CPU Utilization & Connection counts.
+        subgraph Storage_Tier
+            S3[Private S3 Bucket]
+        end
 
-## 🔒 Security Hardening
-*   **WAF Integration**: ALB is protected by an AWS Web Application Firewall.
-*   **VPC Flow Logs**: Full network audit logging enabled.
-*   **FinOps Managed Logs**: Explicit CloudWatch Log Groups with 7-day retention to prevent infinite storage costs.
-*   **IMDSv2 Enforced**: Metadata service hardening on all EC2 instances.
-*   **Secret Protection**: No hardcoded credentials; Git history purged of all sensitive placeholder data.
+        subgraph Governance_Control_Plane
+            Config[AWS Config Rule]
+            Remediator[Auto-Remediation Lambda]
+        end
+    end
 
-## 🚀 Quick Start
-
-### Prerequisites
-*   Terraform >= 1.14
-*   AWS CLI configured
-*   (Optional) Moto/LocalStack for local validation
-
-### Deployment
-1.  Navigate to the terraform directory:
-    ```bash
-    cd terraform
-    ```
-2.  Initialize the project:
-    ```bash
-    terraform init
-    ```
-3.  Create your environment variables (refer to `environments/example.tfvars`):
-    ```bash
-    cp environments/example.tfvars environments/dev.tfvars
-    # Edit dev.tfvars with your specific values
-    ```
-4.  Deploy to AWS:
-    ```bash
-    terraform plan -var-file=environments/dev.tfvars
-    terraform apply -var-file=environments/dev.tfvars
-    ```
-
-## 🛠️ Local Validation
-This project has been 100% verified using **Moto Docker** to simulate a 120+ resource AWS environment. Every dependency and logic path has been traces and confirmed physically sound.
-
-## 📄 License
-Distributed under the MIT License. See `LICENSE` for more information.
+    User --> CF
+    CF --> S3
+    User --> WAF
+    WAF --> ALB
+    ALB -- Weighted Routing --> ASG_B
+    ALB -- Weighted Routing --> ASG_G
+    ASG_B & ASG_G --> RDS
+    ASG_B & ASG_G --> AGW
+    AGW --> Lambda
+    Bastion -- Private Only --> SSM_VPCE
+    Config -- Compliance Violation --> Remediator
+    Remediator -- Self-Heal --> ALB
+```
 
 ---
-**Maintained by:** [Kindee18](https://github.com/Kindee18)  
-*Part of the Cloud Engineering Tools Mastery Series.*
+
+## 🚀 Key Architectural Layers
+
+### 1. **High-Availability Networking**
+*   **Massive Scale**: Deployed across **6 Availability Zones** with **18 Subnets** total.
+*   **Redundancy**: Each AZ has its own dedicated **NAT Gateway** to eliminate single points of failure for outbound traffic.
+*   **CIDR Strategy**: Implemented non-overlapping logical offsets (`+20`, `+40`) to ensure tier isolation and future scalability.
+
+### 2. **Compute & Deployment (Blue/Green)**
+*   **Zero-Downtime**: Utilizes two independent Auto Scaling Groups (ASG) behind a single ALB.
+*   **Canary Deployment**: ALB is configured with **Weighted Forwarding**, allowing traffic to be shifted incrementally (e.g., 90% to Blue, 10% to Green) for safe testing.
+*   **Health Checks**: Custom `/health` endpoint monitoring ensures the ALB only routes traffic to fully initialized instances.
+
+### 3. **Zero-Trust Management Tier**
+*   **SSM Bastion**: A private EC2 host with **zero open inbound ports**. 
+*   **VPC Interface Endpoints**: Management traffic for SSM and EC2 stays entirely on the AWS backbone, never traversing the public internet.
+*   **Hardening**: Metadata service (IMDSv2) is strictly enforced to prevent credential theft.
+
+### 4. **Self-Healing Governance (AWS Config)**
+*   **Automated Compliance**: Implemented a **Governance-as-Code** loop.
+*   **The Logic**: AWS Config monitors Security Groups. If a user manually opens Port 22 (SSH) to the world, Amazon EventBridge triggers a **Remediation Lambda** that revokes the rule within seconds.
+
+### 5. **Observability & Operations**
+*   **CloudWatch Dashboard**: Centralized visualization of ALB latency (P99), 5XX error rates, ASG instance health, and RDS CPU/Connection telemetry.
+*   **FinOps**: Managed Log Groups for Lambda with a **7-day retention policy** to prevent unmanaged storage costs.
+
+---
+
+## 🔒 Security Posture
+*   **WAF Protected**: All web traffic is filtered by an AWS WAF Web ACL.
+*   **Data at Rest**: RDS Deletion Protection enabled; S3 Bucket Versioning and Encryption active.
+*   **Edge Security**: S3 assets are shielded by CloudFront with **Origin Access Control (OAC)**.
+
+---
+
+## 🛠️ Implementation Details
+
+### Deployment Guide
+1.  **Initialize**: `terraform init`
+2.  **Configure**: Create `environments/dev.tfvars` based on `example.tfvars`.
+3.  **Deploy**: `terraform apply -var-file=environments/dev.tfvars`
+
+### Local Validation
+Verified via **Moto Docker** simulating a 124-resource environment. Confirmed all dependency graphs and logic paths.
+
+## 📄 License
+This project is licensed under the MIT License - see the `LICENSE` file for details.
+
+---
+**Author**: [Kindee18](https://github.com/Kindee18)  
+*Architecting for the future of Cloud Engineering.*
