@@ -18,6 +18,7 @@ resource "aws_db_instance" "main" {
   vpc_security_group_ids = [var.database_sg_id]
   skip_final_snapshot  = true
   multi_az             = var.environment == "prod" ? true : false
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 
   tags = var.common_tags
 }
