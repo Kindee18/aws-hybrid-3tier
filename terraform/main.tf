@@ -55,3 +55,13 @@ module "storage" {
   environment  = var.environment
   common_tags  = module.tags.common_tags
 }
+
+module "management" {
+  source = "./modules/management"
+
+  project_name = var.project_name
+  environment  = var.environment
+  vpc_id       = module.networking.vpc_id
+  subnet_id    = module.networking.private_subnet_ids[0] # Place in the first private subnet
+  common_tags  = module.tags.common_tags
+}

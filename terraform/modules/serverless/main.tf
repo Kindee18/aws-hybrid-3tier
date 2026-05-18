@@ -24,8 +24,28 @@ resource "aws_iam_role" "lambda" {
   tags = var.common_tags
 }
 
+resource "aws_iam_policy" "lambda_basic" {
+  name        = "${var.project_name}-lambda-basic"
+  description = "Basic execution policy for Lambda"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ]
+      Effect   = "Allow"
+      Resource = "*"
+    }]
+  })
+
+  tags = var.common_tags
+}
+
 resource "aws_iam_role_policy_attachment" "lambda_basic" {
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  policy_arn = aws_iam_policy.lambda_basic.arn
   role       = aws_iam_role.lambda.name
 }
 
