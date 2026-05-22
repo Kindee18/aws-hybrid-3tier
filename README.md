@@ -77,8 +77,8 @@ graph TD
 ## 🚀 Key Architectural Layers
 
 ### 1. **High-Availability Networking**
-*   **Massive Scale**: Deployed across **6 Availability Zones** with **18 Subnets** total.
-*   **Redundancy**: Each AZ has its own dedicated **NAT Gateway** to eliminate single points of failure for outbound traffic.
+*   **Scalable Architecture**: Support for up to **6 Availability Zones** (defaulting to 3 for balanced High Availability and cost).
+*   **Redundancy**: In production mode, each AZ receives its own dedicated **NAT Gateway** to eliminate single points of failure.
 *   **CIDR Strategy**: Implemented non-overlapping logical offsets (`+20`, `+40`) to ensure tier isolation and future scalability.
 
 ### 2. **Compute & Deployment (Blue/Green)**
