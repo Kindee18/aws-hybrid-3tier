@@ -82,14 +82,14 @@ data "aws_ami" "amazon_linux_2023" {
 
   filter {
     name   = "name"
-    values = ["al2023-ami-2023*-x86_64"]
+    values = ["al2023-ami-2023*-arm64"] # Switched to ARM64
   }
 }
 
 resource "aws_launch_template" "main" {
   name_prefix   = "${var.project_name}-lt-"
   image_id      = data.aws_ami.amazon_linux_2023.id
-  instance_type = var.instance_type
+  instance_type = "t4g.micro" # Switched to Graviton (t4g)
 
   # Spot Instance Optimization for Non-Prod
   instance_market_options {
