@@ -5,12 +5,22 @@ module "tags" {
   project     = var.project_name
 }
 
+module "security" {
+  source = "./modules/security"
+
+  project_name = var.project_name
+  environment  = var.environment
+  db_password  = var.db_password
+  common_tags  = module.tags.common_tags
+}
+
 module "networking" {
   source = "./modules/networking"
 
   project_name = var.project_name
   environment  = var.environment
   vpc_cidr     = var.vpc_cidr
+  az_count     = var.az_count
   common_tags  = module.tags.common_tags
 }
 

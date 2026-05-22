@@ -52,19 +52,27 @@ data "archive_file" "remediator" {
     content  = <<-EOF
 import boto3
 import json
+import logging
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 def handler(event, context):
     ec2 = boto3.client('ec2')
     
-    # Extract details from Config/EventBridge
     try:
-        detail = event['detail']
-        sg_id = detail['resourceId']
+        # 1. Parse violation details
+        detail = event.get('detail', {})
+        sg_id = detail.get('resourceId')
         
-        print(f"Violation detected in Security Group: {sg_id}")
+        if not sg_id:
+            logger.error("Event received without resourceId. Event: " + json.dumps(event))
+            return
+
+        logger.info(f"AUDIT TRIGGERED: Violation detected in Security Group: {sg_id}")
         
-        # Remediation: Forcefully remove SSH (Port 22) if opened to 0.0.0.0/0
-        ec2.revoke_security_group_ingress(
+        # 2. Remediation: Forcefully remove SSH (Port 22) if opened to 0.0.0.0/0
+        response = ec2.revoke_security_group_ingress(
             GroupId=sg_id,
             IpPermissions=[
                 {
@@ -75,10 +83,18 @@ def handler(event, context):
                 }
             ]
         )
-        print(f"Successfully remediated {sg_id}: Closed Port 22 to the world.")
         
+        logger.info(f"SUCCESS: Remediated {sg_id}. Closed Port 22 to the world. Response: " + str(response))
+        
+    except ec2.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == 'InvalidPermission.NotFound':
+            logger.warning(f"Rule already removed or not found in {sg_id}.")
+        else:
+            logger.error(f"AWS API ERROR during remediation of {sg_id}: {str(e)}")
+            raise e
     except Exception as e:
-        print(f"Error during remediation: {str(e)}")
+        logger.error(f"UNEXPECTED ERROR during remediation: {str(e)}")
+        raise e
 EOF
     filename = "index.py"
   }

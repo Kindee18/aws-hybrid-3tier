@@ -107,6 +107,14 @@ This project treats cost as a first-class engineering concern, with different lo
 *   **Graviton Standard (ARM64)**: Migrated the entire compute tier to **AWS Graviton (t4g)**, achieving 20% lower hourly costs and 40% better price-performance than legacy x86 instances.
 *   **S3 Intelligent-Tiering**: Automated storage class transitions to ensure data is always stored at the lowest possible price point without retrieval fees.
 
+### 6. **Production-Hardened Refinements**
+Addresses real-world architectural gaps often missed in portfolio projects:
+*   **AWS Secrets Manager**: Database passwords are no longer passed as plain-text variables. Instead, they are stored in Secrets Manager and fetched **at runtime** by the EC2 instances using IAM roles.
+*   **Proactive Alerting**: Integrated **CloudWatch Alarms** with **Amazon SNS**. The system automatically notifies engineers if ALB 5XX errors spike or RDS CPU utilization exceeds 80%.
+*   **Variable Scaling**: The entire architecture (Subnets, NATs, Routes) is now controlled by a single `az_count` variable, allowing the business to balance High Availability vs. Cost with one line of code.
+*   **State Locking (Ready)**: Included a production-ready **Remote S3 Backend** configuration with **DynamoDB State Locking** to prevent state corruption in team environments.
+*   **Robust Remediation**: Enhanced the Governance Lambda with detailed logging and error handling for production reliability.
+
 ## 🔒 Security Posture
 *   **WAF Protected**: All web traffic is filtered by an AWS WAF Web ACL.
 *   **Data at Rest**: RDS Deletion Protection enabled; S3 Bucket Versioning and Encryption active.

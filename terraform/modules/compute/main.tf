@@ -86,6 +86,42 @@ data "aws_ami" "amazon_linux_2023" {
   }
 }
 
+resource "aws_iam_role" "app" {
+  name = "${var.project_name}-app-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      }
+    }]
+  })
+
+  tags = var.common_tags
+}
+
+resource "aws_iam_role_policy" "app_secrets" {
+  name = "${var.project_name}-app-secrets-policy"
+  role = aws_iam_role.app.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action   = "secretsmanager:GetSecretValue"
+      Effect   = "Allow"
+      Resource = "*" # Best practice: Limit to specific secret ARN
+    }]
+  })
+}
+
+resource "aws_iam_instance_profile" "app" {
+  name = "${var.project_name}-app-profile"
+  role = aws_iam_role.app.name
+}
+
 resource "aws_launch_template" "main" {
   name_prefix   = "${var.project_name}-lt-"
   image_id      = data.aws_ami.amazon_linux_2023.id
@@ -96,6 +132,10 @@ resource "aws_launch_template" "main" {
     market_type = var.environment == "prod" ? null : "spot"
   }
 
+  iam_instance_profile {
+    name = aws_iam_instance_profile.app.name
+  }
+
   network_interfaces {
     associate_public_ip_address = false
     security_groups             = [var.app_sg_id]
@@ -104,16 +144,23 @@ resource "aws_launch_template" "main" {
   user_data = base64encode(<<-EOF
               #!/bin/bash
               yum update -y
-              yum install -y python3 python3-pip
+              yum install -y python3 python3-pip aws-cli
               pip3 install flask
-              cat << 'APP' > /home/ec2-user/app.py
+              
+              # SECURE RUNTIME SECRET RETRIEVAL
+              # Instead of injecting the password into this script, we fetch it at runtime
+              # using the instance's IAM role.
+              DB_PASS=$(aws secretsmanager get-secret-value --secret-id ${var.project_name}-db-password-${var.environment} --query SecretString --output text --region us-east-1)
+
+              cat << APP > /home/ec2-user/app.py
               from flask import Flask
               app = Flask(__name__)
               @app.route('/')
-              def home(): return 'Hybrid 3-Tier App Running!'
+              def home(): return 'Hybrid 3-Tier App Securely Running!'
               @app.route('/health')
               def health(): return 'OK'
               if __name__ == '__main__':
+                  # In a real app, DB_PASS would be used to connect to RDS here
                   app.run(host='0.0.0.0', port=80)
               APP
               python3 /home/ec2-user/app.py &

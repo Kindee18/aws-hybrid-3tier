@@ -45,3 +45,9 @@ variable "vpc_cidr" {
   type        = string
   default     = "10.0.0.0/16"
 }
+
+variable "az_count" {
+  description = "Number of Availability Zones to use (Balanced cost/HA)"
+  type        = number
+  default     = 3 # AWS Recommended standard
+}
