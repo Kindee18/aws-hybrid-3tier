@@ -160,6 +160,44 @@ terraform destroy -var-file=environments/dev.tfvars
 ```
 *Note: If the RDS instance fails to destroy, go to the RDS Console and delete it manually (RDS Deletion Protection is enabled by default for safety).*
 
+---
+
+## 🏗️ Production Deployment Workflow
+
+In professional environments, we separate **Dev** from **Prod** using Terraform Workspaces and environment-specific variables.
+
+### 1. Preparation
+Create a `prod.tfvars` file and set the environment to production:
+```bash
+cp environments/example.tfvars environments/prod.tfvars
+```
+**Required Changes in `prod.tfvars`**:
+*   `environment = "prod"` (Triggers High-Availability logic)
+*   `az_count = 3` (AWS standard for HA)
+
+### 2. State Isolation (Workspaces)
+Always use a separate workspace for production to prevent accidental state corruption:
+```bash
+terraform workspace new prod
+terraform workspace select prod
+```
+
+### 3. Professional Deployment (Plan-to-File)
+In production, we save the plan to a file to ensure that the exact resources we reviewed are the ones deployed:
+```bash
+terraform plan -var-file=environments/prod.tfvars -out=prod.tfplan
+# Manual Review of prod.tfplan
+terraform apply prod.tfplan
+```
+
+### 🔁 Architectural Shifts in Production
+When `environment` is set to `prod`, the code automatically performs these enterprise-grade upgrades:
+*   **Networking**: Scales from 1 shared NAT Gateway to **one NAT Gateway per AZ** for maximum fault tolerance.
+*   **Compute**: Disables **Spot Instances** and switches to **On-Demand** instances for mission-critical stability.
+*   **Database**: Automatically enables **Multi-AZ Deployment** (Standby Replica) and **RDS Deletion Protection**.
+
+---
+
 ## 🛠️ Local Validation
 Verified via **Moto Docker** simulating a 124-resource environment. Confirmed all dependency graphs and logic paths.
 
