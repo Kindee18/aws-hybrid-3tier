@@ -32,10 +32,9 @@ This estimate provides a realistic breakdown of the costs associated with runnin
 *   **Reserved Instances**: Purchase a 1-year or 3-year commitment for production database instances.
 *   **Single-AZ for Dev**: Switch RDS to Single-AZ for non-production environments to cut the DB bill in half ($14/month).
 
-### ⚠ Critical Warning: Extended Support Fees
-AWS now charges **$0.10 per vCPU-hour** for older PostgreSQL versions (v11, v12, v13). 
-*   **Impact**: This can add **$146.00/month** to your bill.
-*   **Prevention**: Always ensure your RDS is running **PostgreSQL v14 or higher** (This project uses v15).
+### 4. Advanced "Data Tax" Elimination
+*   **VPC Gateway Endpoints**: I implemented **S3 Gateway Endpoints** (Free) which completely bypasses the $0.045/GB NAT processing fee for internal AWS traffic.
+*   **Graviton Migration**: By standardizing on **ARM64 (t4g)**, we achieved a fixed **20% discount** compared to standard Intel/AMD instances.
 
 ---
 *Prices are estimated based on us-east-1 on-demand rates for May 2026.*

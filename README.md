@@ -93,11 +93,10 @@ graph TD
 *   **Automated Compliance**: Implemented a **Governance-as-Code** loop.
 *   **The Logic**: AWS Config monitors Security Groups. If a user manually opens Port 22 (SSH) to the world, Amazon EventBridge triggers a **Remediation Lambda** that revokes the rule within seconds.
 
-### 5. **Observability & Operations**
-*   **CloudWatch Dashboard**: Centralized visualization of ALB latency (P99), 5XX error rates, ASG instance health, and RDS CPU/Connection telemetry.
-*   **FinOps**: Managed Log Groups for Lambda with a **7-day retention policy** to prevent unmanaged storage costs.
-
----
+### 5. **Advanced FinOps & Efficiency**
+*   **VPC Gateway Endpoints**: Implemented free S3 endpoints to eliminate the "NAT Gateway Tax," keeping internal data traffic off expensive managed gateways.
+*   **Graviton Standard (ARM64)**: Migrated the entire compute tier to **AWS Graviton (t4g)**, achieving 20% lower hourly costs and 40% better price-performance than legacy x86 instances.
+*   **S3 Intelligent-Tiering**: Automated storage class transitions to ensure data is always stored at the lowest possible price point without retrieval fees.
 
 ## 🔒 Security Posture
 *   **WAF Protected**: All web traffic is filtered by an AWS WAF Web ACL.
