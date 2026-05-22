@@ -63,11 +63,13 @@ graph TD
     ALB -- Weighted Routing --> ASG_B
     ALB -- Weighted Routing --> ASG_G
     ASG_B & ASG_G --> RDS
-    ASG_B & ASG_G --> AGW
+    ASG_B & ASG_G -.-> AGW
     AGW --> Lambda
-    Bastion -- Private Only --> SSM_VPCE
-    Config -- Compliance Violation --> Remediator
-    Remediator -- Self-Heal --> ALB
+    Bastion -- Private Interface --> SSM_VPCE
+    SSM_VPCE -- Internal Link --> AWS_Cloud
+    Config -- Violation Event --> Remediator
+    Remediator -- Revoke Rule --> Public_Subnets_6_AZs
+    Remediator -- Revoke Rule --> Private_App_Subnets_6_AZs
 ```
 
 ---
