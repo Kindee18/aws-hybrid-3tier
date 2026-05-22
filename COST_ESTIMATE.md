@@ -21,14 +21,14 @@ This estimate provides a realistic breakdown of the costs associated with runnin
 
 ## 💡 Cost Optimization Strategies (The "Pro" Way)
 
-### 1. Networking (Save ~$180/month)
+### 1. Networking (Save ~$180/month - Already Implemented in Code)
 *   **Dev/Staging Strategy**: Use a single NAT Gateway shared across all AZs.
 *   **NAT Instances**: Use a t3.nano instance as a NAT server instead of the managed service.
 
-### 2. Compute (Save up to 90%)
+### 2. Compute (Save up to 90% - Already Implemented in Code)
 *   **Spot Instances**: Use Spot for the ASG fleets in Dev/Staging environments.
 
-### 3. Database (Save 30-50%)
+### 3. Database (Save 30-50% - Already Implemented in Code)
 *   **Reserved Instances**: Purchase a 1-year or 3-year commitment for production database instances.
 *   **Single-AZ for Dev**: Switch RDS to Single-AZ for non-production environments to cut the DB bill in half ($14/month).
 

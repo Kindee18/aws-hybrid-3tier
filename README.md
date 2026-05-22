@@ -93,7 +93,16 @@ graph TD
 *   **Automated Compliance**: Implemented a **Governance-as-Code** loop.
 *   **The Logic**: AWS Config monitors Security Groups. If a user manually opens Port 22 (SSH) to the world, Amazon EventBridge triggers a **Remediation Lambda** that revokes the rule within seconds.
 
-### 5. **Advanced FinOps & Efficiency**
+### 5. **FinOps & Cost-Optimization-as-Code**
+This project treats cost as a first-class engineering concern, with different logic for **Production** vs. **Non-Production** environments.
+
+#### **Foundational Savings (Implemented)**
+*   **Dynamic NAT Scaling**: In `dev`/`staging`, the code automatically scales down from 6 NAT Gateways to **1 shared gateway**, saving **~$180/month**.
+*   **Automated Spot Instances**: ASG fleets in non-prod environments utilize **AWS Spot Instances**, reducing compute costs by up to **90%**.
+*   **Environment-Aware RDS**: Database deployments automatically shift between **Multi-AZ (High Availability)** for production and **Single-AZ (Cost Saving)** for development.
+*   **Managed Log Retention**: Implemented a strict **7-day retention policy** on all CloudWatch Log Groups to prevent infinite storage billing.
+
+#### **Advanced Architectural Efficiency (Implemented)**
 *   **VPC Gateway Endpoints**: Implemented free S3 endpoints to eliminate the "NAT Gateway Tax," keeping internal data traffic off expensive managed gateways.
 *   **Graviton Standard (ARM64)**: Migrated the entire compute tier to **AWS Graviton (t4g)**, achieving 20% lower hourly costs and 40% better price-performance than legacy x86 instances.
 *   **S3 Intelligent-Tiering**: Automated storage class transitions to ensure data is always stored at the lowest possible price point without retrieval fees.
