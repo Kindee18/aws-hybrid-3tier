@@ -124,14 +124,43 @@ Addresses real-world architectural gaps often missed in portfolio projects:
 
 ---
 
-## 🛠️ Implementation Details
+## 🚀 Real-World Deployment & Safety Guide
 
-### Deployment Guide
-1.  **Initialize**: `terraform init`
-2.  **Configure**: Create `environments/dev.tfvars` based on `example.tfvars`.
-3.  **Deploy**: `terraform apply -var-file=environments/dev.tfvars`
+Follow these steps to deploy this platform to a live AWS account. **Estimated Cost: <$0.50 for a 1-hour test run.**
 
-### Local Validation
+### 1. Prerequisites
+*   AWS CLI installed and configured (`aws configure`).
+*   Terraform installed (>= 1.14).
+*   An active AWS account (Free Tier eligible).
+
+### 2. Configuration
+Do not edit the example files directly. Create a local environment file:
+```bash
+cd terraform
+cp environments/example.tfvars environments/dev.tfvars
+```
+**Important**: Open `dev.tfvars` and set `environment = "dev"` to enable the FinOps cost-saving logic (Shared NAT & Spot instances).
+
+### 3. Execution
+```bash
+terraform init
+terraform plan -var-file=environments/dev.tfvars
+terraform apply -var-file=environments/dev.tfvars
+```
+
+### 4. Verification
+*   **Web Tier**: Visit the `alb_dns_name` output in your browser.
+*   **Observability**: View the custom dashboard in the CloudWatch Console.
+*   **Security Audit**: Manually open Port 22 on a Security Group and watch the Auto-Remediator delete it.
+
+### 🛡️ Safety & Cleanup (Crucial)
+To avoid ongoing AWS charges, destroy the infrastructure immediately after testing:
+```bash
+terraform destroy -var-file=environments/dev.tfvars
+```
+*Note: If the RDS instance fails to destroy, go to the RDS Console and delete it manually (RDS Deletion Protection is enabled by default for safety).*
+
+## 🛠️ Local Validation
 Verified via **Moto Docker** simulating a 124-resource environment. Confirmed all dependency graphs and logic paths.
 
 ## 📄 License
