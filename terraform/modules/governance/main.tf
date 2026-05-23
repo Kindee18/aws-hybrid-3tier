@@ -111,7 +111,7 @@ resource "aws_lambda_function" "remediator" {
   tags = var.common_tags
 }
 
-# --- AWS Config Rule ---
+# --- AWS Config Rule: Restricted Ports ---
 resource "aws_config_config_rule" "restricted_common_ports" {
   name = "${var.project_name}-restricted-ssh"
 
@@ -122,6 +122,24 @@ resource "aws_config_config_rule" "restricted_common_ports" {
 
   input_parameters = jsonencode({
     blockedPort1 = "22"
+  })
+
+  tags = var.common_tags
+}
+
+# --- AWS Config Rule: Tagging Enforcement ---
+resource "aws_config_config_rule" "required_tags" {
+  name = "${var.project_name}-required-tags"
+
+  source {
+    owner             = "AWS"
+    source_identifier = "REQUIRED_TAGS"
+  }
+
+  input_parameters = jsonencode({
+    tag1Key = "Project"
+    tag2Key = "Environment"
+    tag3Key = "Owner"
   })
 
   tags = var.common_tags

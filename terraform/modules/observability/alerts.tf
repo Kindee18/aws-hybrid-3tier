@@ -13,7 +13,7 @@ resource "aws_cloudwatch_metric_alarm" "high_errors" {
   statistic           = "Sum"
   threshold           = "10"
   alarm_description   = "This metric monitors high 5XX errors from the ALB"
-  alarm_actions       = [aws_sns_topic.alerts.arn]
+  alarm_actions       = [aws_sns_topic.alerts.arn, var.rollback_lambda_arn]
 
   dimensions = {
     LoadBalancer = var.alb_arn_suffix

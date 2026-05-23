@@ -80,12 +80,13 @@ module "management" {
 module "observability" {
   source = "./modules/observability"
 
-  project_name   = var.project_name
-  environment    = var.environment
-  alb_arn_suffix = module.compute.alb_arn_suffix
-  db_instance_id = module.database.db_instance_id
-  asg_name       = module.compute.blue_asg_name # Defaulting to blue
-  common_tags    = module.tags.common_tags
+  project_name        = var.project_name
+  environment         = var.environment
+  alb_arn_suffix      = module.compute.alb_arn_suffix
+  db_instance_id      = module.database.db_instance_id
+  asg_name            = module.compute.blue_asg_name # Defaulting to blue
+  rollback_lambda_arn = module.compute.rollback_lambda_arn
+  common_tags         = module.tags.common_tags
 }
 
 module "governance" {

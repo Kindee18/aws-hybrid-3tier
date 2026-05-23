@@ -1,7 +1,7 @@
 output "rds_endpoint" {
-  value = aws_db_instance.main.endpoint
+  value = aws_rds_cluster.main.endpoint
 }
 
 output "db_instance_id" {
-  value = aws_db_instance.main.identifier
+  value = aws_rds_cluster.main.cluster_identifier
 }

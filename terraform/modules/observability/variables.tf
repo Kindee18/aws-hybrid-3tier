@@ -24,3 +24,8 @@ variable "asg_name" {
 variable "common_tags" {
   type = map(string)
 }
+
+variable "rollback_lambda_arn" {
+  type        = string
+  description = "ARN of the Lambda to trigger for Canary rollbacks"
+}

@@ -124,7 +124,7 @@ resource "aws_iam_instance_profile" "app" {
 
 resource "aws_launch_template" "main" {
   name_prefix   = "${var.project_name}-lt-"
-  image_id      = data.aws_ami.amazon_linux_2023.id
+  image_id      = var.provided_ami_id != null ? var.provided_ami_id : data.aws_ami.amazon_linux_2023.id
   instance_type = "t4g.micro" # Switched to Graviton (t4g)
 
   # Spot Instance Optimization for Non-Prod
@@ -215,4 +215,95 @@ resource "aws_autoscaling_group" "green" {
     value               = "${var.project_name}-app-green"
     propagate_at_launch = true
   }
+}
+
+# --- AUTOMATED CANARY ROLLBACK ---
+resource "aws_iam_role" "rollback" {
+  name = "${var.project_name}-rollback-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "lambda.amazonaws.com"
+      }
+    }]
+  })
+
+  tags = var.common_tags
+}
+
+resource "aws_iam_role_policy" "rollback" {
+  name = "${var.project_name}-rollback-policy"
+  role = aws_iam_role.rollback.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action   = "elasticloadbalancing:ModifyListener"
+      Effect   = "Allow"
+      Resource = "*"
+    }]
+  })
+}
+
+data "archive_file" "rollback" {
+  type        = "zip"
+  output_path = "${path.module}/rollback.zip"
+  source {
+    content  = <<-EOF
+import boto3
+import os
+
+def handler(event, context):
+    elbv2 = boto3.client('elbv2')
+    listener_arn = os.environ['LISTENER_ARN']
+    blue_tg_arn = os.environ['BLUE_TG_ARN']
+    green_tg_arn = os.environ['GREEN_TG_ARN']
+    
+    print(f"ALARM TRIGGERED: Rolling back traffic to Blue fleet for listener {listener_arn}")
+    
+    elbv2.modify_listener(
+        ListenerArn=listener_arn,
+        DefaultActions=[
+            {
+                'Type': 'forward',
+                'ForwardConfig': {
+                    'TargetGroups': [
+                        {'TargetGroupArn': blue_tg_arn, 'Weight': 100},
+                        {'TargetGroupArn': green_tg_arn, 'Weight': 0}
+                    ]
+                }
+            }
+        ]
+    )
+    print("Rollback complete.")
+EOF
+    filename = "index.py"
+  }
+}
+
+resource "aws_lambda_function" "rollback" {
+  filename         = data.archive_file.rollback.output_path
+  function_name    = "${var.project_name}-canary-rollback"
+  role             = aws_iam_role.rollback.arn
+  handler          = "index.handler"
+  runtime          = "python3.9"
+  source_code_hash = data.archive_file.rollback.output_base64sha256
+
+  environment {
+    variables = {
+      LISTENER_ARN = aws_lb_listener.http.arn
+      BLUE_TG_ARN  = aws_lb_target_group.blue.arn
+      GREEN_TG_ARN = aws_lb_target_group.green.arn
+    }
+  }
+
+  tags = var.common_tags
+}
+
+output "rollback_lambda_arn" {
+  value = aws_lambda_function.rollback.arn
 }

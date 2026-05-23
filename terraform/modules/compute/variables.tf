@@ -38,3 +38,9 @@ variable "waf_acl_arn" {
   type        = string
   description = "The ARN of the WAF Web ACL to associate with the ALB"
 }
+
+variable "provided_ami_id" {
+  type        = string
+  description = "The Golden AMI ID. If provided, overrides the dynamic lookup."
+  default     = null
+}
