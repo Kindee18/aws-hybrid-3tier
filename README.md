@@ -117,6 +117,22 @@ Addresses real-world architectural gaps often missed in portfolio projects:
 *   **State Locking (Ready)**: Included a production-ready **Remote S3 Backend** configuration with **DynamoDB State Locking** to prevent state corruption in team environments.
 *   **Robust Remediation**: Enhanced the Governance Lambda with detailed logging and error handling for production reliability.
 
+### 7. **Elite-Level Architectural Evolution**
+The platform was recently upgraded from a high-quality demo to an **Enterprise-Ready Blueprint** to address the most demanding Principal Architect requirements:
+
+*   **Amazon Aurora Serverless v2**: 
+    *   *Change*: Migrated from standard RDS to an Aurora Serverless v2 cluster. 
+    *   *Why*: To enable sub-second vertical scaling of CPU and memory, ensuring the database is never a bottleneck during 10x traffic spikes while maintaining near-zero costs during idle periods.
+*   **Automated Canary Rollbacks**:
+    *   *Change*: Implemented a "Self-Healing Deployment" Lambda triggered by CloudWatch Alarms.
+    *   *Why*: To eliminate human error. If a new "Green" deployment causes a spike in 5XX errors, the system automatically shifts traffic back to the stable "Blue" fleet within seconds.
+*   **Mandatory Tagging Enforcement**:
+    *   *Change*: Added AWS Config logic for `REQUIRED_TAGS` (Project, Environment, Owner).
+    *   *Why*: To prevent "Ghost Costs" and ensure 100% financial accountability. Any untagged resource is automatically flagged for deletion or remediation.
+*   **Golden Image Strategy**:
+    *   *Change*: Refactored the Compute module to support and prioritize versioned `provided_ami_id` inputs.
+    *   *Why*: To prevent "AMI Drift." In production, we never use "the latest" image; we use a hardened, tested "Golden Image" to ensure every server in the fleet is identical and secure.
+
 ## 🔒 Security Posture
 *   **WAF Protected**: All web traffic is filtered by an AWS WAF Web ACL.
 *   **Data at Rest**: RDS Deletion Protection enabled; S3 Bucket Versioning and Encryption active.
