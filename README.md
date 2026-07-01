@@ -34,7 +34,7 @@ graph TD
             end
 
             subgraph Private_DB_Subnets_6_AZs
-                RDS[Multi-AZ RDS PostgreSQL]
+                RDS[Multi-AZ Aurora Serverless v2]
             end
 
             subgraph VPC_Endpoints
