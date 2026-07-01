@@ -12,3 +12,5 @@ __pycache__/
 *.bak
 tfplan
 final_logic_trace
+*plan_output.txt
+*breakdown.txt

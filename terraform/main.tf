@@ -27,16 +27,22 @@ module "networking" {
 module "compute" {
   source = "./modules/compute"
 
-  project_name       = var.project_name
-  environment        = var.environment
-  vpc_id             = module.networking.vpc_id
-  public_subnet_ids  = module.networking.public_subnet_ids
-  private_subnet_ids = module.networking.private_subnet_ids
-  alb_sg_id          = module.networking.alb_sg_id
-  app_sg_id          = module.networking.app_sg_id
-  instance_type      = var.instance_type
-  common_tags        = module.tags.common_tags
-  waf_acl_arn        = module.networking.waf_acl_arn
+  project_name                 = var.project_name
+  environment                  = var.environment
+  vpc_id                       = module.networking.vpc_id
+  public_subnet_ids            = module.networking.public_subnet_ids
+  private_subnet_ids           = module.networking.private_subnet_ids
+  alb_sg_id                    = module.networking.alb_sg_id
+  app_sg_id                    = module.networking.app_sg_id
+  instance_type                = var.instance_type
+  common_tags                  = module.tags.common_tags
+  waf_acl_arn                  = module.networking.waf_acl_arn
+  database_password_secret_arn = module.security.secret_arn
+
+  # Environment-specific scaling rules
+  asg_min_size         = var.environment == "prod" ? 2 : 1
+  asg_desired_capacity = var.environment == "prod" ? 2 : 1
+  asg_max_size         = var.environment == "prod" ? 4 : 2
 }
 
 module "database" {
@@ -70,11 +76,13 @@ module "storage" {
 module "management" {
   source = "./modules/management"
 
-  project_name = var.project_name
-  environment  = var.environment
-  vpc_id       = module.networking.vpc_id
-  subnet_id    = module.networking.private_subnet_ids[0] # Place in the first private subnet
-  common_tags  = module.tags.common_tags
+  project_name       = var.project_name
+  environment        = var.environment
+  vpc_id             = module.networking.vpc_id
+  bastion_subnet_id  = module.networking.private_subnet_ids[0] # Bastion in first AZ
+  private_subnet_ids = var.environment == "prod" ? module.networking.private_subnet_ids : [module.networking.private_subnet_ids[0]]
+  common_tags        = module.tags.common_tags
+  app_sg_id          = module.networking.app_sg_id
 }
 
 module "observability" {
@@ -91,6 +99,7 @@ module "observability" {
 
 module "governance" {
   source = "./modules/governance"
+  count  = var.environment == "prod" ? 1 : 0
 
   project_name = var.project_name
   environment  = var.environment

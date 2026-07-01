@@ -1,3 +1,5 @@
+data "aws_region" "current" {}
+
 # IAM Role for SSM Access
 resource "aws_iam_role" "bastion" {
   name = "${var.project_name}-bastion-role"
@@ -54,10 +56,10 @@ data "aws_ami" "amazon_linux_2023" {
 }
 
 resource "aws_instance" "bastion" {
-  ami                  = data.aws_ami.amazon_linux_2023.id
-  instance_type        = var.instance_type
-  subnet_id            = var.subnet_id
-  iam_instance_profile = aws_iam_instance_profile.bastion.name
+  ami                    = data.aws_ami.amazon_linux_2023.id
+  instance_type          = var.instance_type
+  subnet_id              = var.bastion_subnet_id
+  iam_instance_profile   = aws_iam_instance_profile.bastion.name
   vpc_security_group_ids = [aws_security_group.bastion.id]
 
   metadata_options {
@@ -85,7 +87,7 @@ resource "aws_security_group" "vpc_endpoints" {
     from_port       = 443
     to_port         = 443
     protocol        = "tcp"
-    security_groups = [aws_security_group.bastion.id]
+    security_groups = [aws_security_group.bastion.id, var.app_sg_id]
   }
 
   tags = var.common_tags
@@ -93,27 +95,36 @@ resource "aws_security_group" "vpc_endpoints" {
 
 resource "aws_vpc_endpoint" "ssm" {
   vpc_id              = var.vpc_id
-  service_name        = "com.amazonaws.us-east-1.ssm"
+  service_name        = "com.amazonaws.${data.aws_region.current.region}.ssm"
   vpc_endpoint_type   = "Interface"
   security_group_ids  = [aws_security_group.vpc_endpoints.id]
-  subnet_ids          = [var.subnet_id]
+  subnet_ids          = var.private_subnet_ids
   private_dns_enabled = true
 }
 
 resource "aws_vpc_endpoint" "ssmmessages" {
   vpc_id              = var.vpc_id
-  service_name        = "com.amazonaws.us-east-1.ssmmessages"
+  service_name        = "com.amazonaws.${data.aws_region.current.region}.ssmmessages"
   vpc_endpoint_type   = "Interface"
   security_group_ids  = [aws_security_group.vpc_endpoints.id]
-  subnet_ids          = [var.subnet_id]
+  subnet_ids          = var.private_subnet_ids
   private_dns_enabled = true
 }
 
 resource "aws_vpc_endpoint" "ec2messages" {
   vpc_id              = var.vpc_id
-  service_name        = "com.amazonaws.us-east-1.ec2messages"
+  service_name        = "com.amazonaws.${data.aws_region.current.region}.ec2messages"
   vpc_endpoint_type   = "Interface"
   security_group_ids  = [aws_security_group.vpc_endpoints.id]
-  subnet_ids          = [var.subnet_id]
+  subnet_ids          = var.private_subnet_ids
+  private_dns_enabled = true
+}
+
+resource "aws_vpc_endpoint" "secretsmanager" {
+  vpc_id              = var.vpc_id
+  service_name        = "com.amazonaws.${data.aws_region.current.region}.secretsmanager"
+  vpc_endpoint_type   = "Interface"
+  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+  subnet_ids          = var.private_subnet_ids
   private_dns_enabled = true
 }

@@ -122,11 +122,23 @@ Addresses real-world architectural gaps often missed in portfolio projects:
 The platform was recently upgraded from a high-quality demo to an **Enterprise-Ready Blueprint** to address the most demanding Principal Architect requirements:
 
 *   **Amazon Aurora Serverless v2**: 
-    *   *Change*: Migrated from standard RDS to an Aurora Serverless v2 cluster. 
+    *   *Change*: Migrated from standard RDS to an Aurora Serverless v2 cluster (engine version `15.8`). 
     *   *Why*: To enable sub-second vertical scaling of CPU and memory, ensuring the database is never a bottleneck during 10x traffic spikes while maintaining near-zero costs during idle periods.
 *   **Automated Canary Rollbacks**:
     *   *Change*: Implemented a "Self-Healing Deployment" Lambda triggered by CloudWatch Alarms.
     *   *Why*: To eliminate human error. If a new "Green" deployment causes a spike in 5XX errors, the system automatically shifts traffic back to the stable "Blue" fleet within seconds.
+*   **VPC DNS Hostname Resolution & Zero-Trust Private Secrets**:
+    *   *Change*: Enabled `enable_dns_hostnames = true` and `enable_dns_support = true` on the main VPC, routing the Secrets Manager and SSM lookups over private VPC interface endpoints.
+    *   *Why*: To keep sensitive password data and management traffic completely off the public internet, preventing MITM attacks and NAT gateway processing fees.
+*   **Auto-Healing Load Balancer Integration**:
+    *   *Change*: Switched ASG `health_check_type` from `EC2` to `ELB` and set a `300` second grace period.
+    *   *Why*: If the Flask app crashes or hangs, the ALB target group health check fails, and the ASG automatically terminates and replaces the broken instance (healing the application tier).
+*   **AWS WAF Managed Rules**:
+    *   *Change*: Configured `AWSManagedRulesCommonRuleSet` and `AWSManagedRulesSQLiRuleSet` on the regional Web ACL.
+    *   *Why*: To inspect inbound web payloads at the edge and block common exploits (XSS, SQLi, LFI) before they reach the compute instances.
+*   **Dynamic VPC Endpoint & Capacity Sizing (FinOps)**:
+    *   *Change*: Implemented Terraform conditionals to restrict VPC Endpoint AZ mappings and ASG compute fleets to a single AZ/instance in `dev` while preserving Multi-AZ in `prod`.
+    *   *Why*: To maintain 100% architectural parity in `dev` while saving over **$60.30/month** in baseline cloud spend.
 *   **Mandatory Tagging Enforcement**:
     *   *Change*: Added AWS Config logic for `REQUIRED_TAGS` (Project, Environment, Owner).
     *   *Why*: To prevent "Ghost Costs" and ensure 100% financial accountability. Any untagged resource is automatically flagged for deletion or remediation.

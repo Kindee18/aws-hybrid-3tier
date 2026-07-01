@@ -154,8 +154,8 @@ resource "aws_cloudwatch_event_rule" "config_violation" {
     source      = ["aws.config"]
     detail-type = ["Config Rules Compliance Change"]
     detail = {
-      messageType = ["ComplianceChangeNotification"]
-      configRuleName = [aws_config_config_rule.restricted_common_ports.name]
+      messageType       = ["ComplianceChangeNotification"]
+      configRuleName    = [aws_config_config_rule.restricted_common_ports.name]
       newComplianceType = ["NON_COMPLIANT"]
     }
   })

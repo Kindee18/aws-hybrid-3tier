@@ -1,3 +1,5 @@
+data "aws_region" "current" {}
+
 resource "aws_cloudwatch_dashboard" "main" {
   dashboard_name = "${var.project_name}-${var.environment}-dashboard"
 
@@ -17,7 +19,7 @@ resource "aws_cloudwatch_dashboard" "main" {
           ]
           period = 300
           stat   = "Sum"
-          region = "us-east-1"
+          region = data.aws_region.current.region
           title  = "ALB Traffic & Errors"
         }
       },
@@ -33,7 +35,7 @@ resource "aws_cloudwatch_dashboard" "main" {
             ["...", { stat = "p99", color = "#9467bd" }]
           ]
           period = 300
-          region = "us-east-1"
+          region = data.aws_region.current.region
           title  = "ALB Latency (Avg & P99)"
         }
       },
@@ -51,7 +53,7 @@ resource "aws_cloudwatch_dashboard" "main" {
           ]
           period = 300
           stat   = "Average"
-          region = "us-east-1"
+          region = data.aws_region.current.region
           title  = "ASG Instance Counts"
         }
       },
@@ -68,7 +70,7 @@ resource "aws_cloudwatch_dashboard" "main" {
           ]
           period = 300
           stat   = "Average"
-          region = "us-east-1"
+          region = data.aws_region.current.region
           title  = "RDS CPU Utilization"
         }
       },
@@ -84,7 +86,7 @@ resource "aws_cloudwatch_dashboard" "main" {
           ]
           period = 300
           stat   = "Average"
-          region = "us-east-1"
+          region = data.aws_region.current.region
           title  = "RDS Connections"
         }
       }

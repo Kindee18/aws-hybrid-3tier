@@ -1,8 +1,12 @@
 data "aws_availability_zones" "available" {}
+data "aws_region" "current" {}
+
 
 resource "aws_vpc" "main" {
-  cidr_block = var.vpc_cidr
-  tags       = var.common_tags
+  cidr_block           = var.vpc_cidr
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+  tags                 = var.common_tags
 }
 
 resource "aws_flow_log" "main" {
@@ -164,9 +168,9 @@ resource "aws_security_group" "app" {
 resource "aws_vpc_security_group_ingress_rule" "app_from_alb" {
   security_group_id            = aws_security_group.app.id
   referenced_security_group_id = aws_security_group.alb.id
-  from_port                    = 8080
+  from_port                    = 80
   ip_protocol                  = "tcp"
-  to_port                      = 8080
+  to_port                      = 80
 }
 
 resource "aws_security_group" "database" {
@@ -191,6 +195,45 @@ resource "aws_wafv2_web_acl" "main" {
   default_action {
     allow {}
   }
+
+  rule {
+    name     = "AWS-AWSManagedRulesCommonRuleSet"
+    priority = 1
+    override_action {
+      none {}
+    }
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesCommonRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWS-AWSManagedRulesCommonRuleSet"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "AWS-AWSManagedRulesSQLiRuleSet"
+    priority = 2
+    override_action {
+      none {}
+    }
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesSQLiRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWS-AWSManagedRulesSQLiRuleSet"
+      sampled_requests_enabled   = true
+    }
+  }
+
   visibility_config {
     cloudwatch_metrics_enabled = true
     metric_name                = "${var.project_name}-waf"
@@ -211,7 +254,7 @@ output "waf_acl_arn" { value = aws_wafv2_web_acl.main.arn }
 # VPC Gateway Endpoint for S3 (Free - Bypasses NAT Gateway)
 resource "aws_vpc_endpoint" "s3" {
   vpc_id       = aws_vpc.main.id
-  service_name = "com.amazonaws.us-east-1.s3"
+  service_name = "com.amazonaws.${data.aws_region.current.region}.s3"
   tags         = var.common_tags
 }
 
@@ -221,25 +264,25 @@ resource "aws_vpc_endpoint_route_table_association" "public_s3" {
 }
 
 resource "aws_vpc_endpoint_route_table_association" "private_s3" {
-  count = var.az_count
+  count           = var.az_count
   route_table_id  = aws_route_table.private[count.index].id
   vpc_endpoint_id = aws_vpc_endpoint.s3.id
 }
 
 resource "aws_route_table_association" "public" {
-  count = var.az_count
+  count          = var.az_count
   subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public.id
 }
 
 resource "aws_route_table_association" "private" {
-  count = var.az_count
+  count          = var.az_count
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private[count.index].id
 }
 
 resource "aws_route_table_association" "database" {
-  count = var.az_count
+  count          = var.az_count
   subnet_id      = aws_subnet.database[count.index].id
   route_table_id = aws_route_table.private[count.index].id
 }

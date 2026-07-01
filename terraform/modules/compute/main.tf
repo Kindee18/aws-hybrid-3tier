@@ -1,3 +1,5 @@
+data "aws_region" "current" {}
+
 resource "aws_lb" "main" {
   name                       = "${var.project_name}-alb"
   internal                   = false
@@ -52,10 +54,57 @@ resource "aws_lb_target_group" "green" {
   tags = merge(var.common_tags, { Tier = "Green" })
 }
 
+# Generate Self-Signed TLS Certificate for ALB HTTPS
+resource "tls_private_key" "self_signed" {
+  algorithm = "RSA"
+  rsa_bits  = 2048
+}
+
+resource "tls_self_signed_cert" "self_signed" {
+  private_key_pem = tls_private_key.self_signed.private_key_pem
+
+  subject {
+    common_name  = "hybrid-3tier.local"
+    organization = "Demo"
+  }
+
+  validity_period_hours = 8760 # 1 year
+
+  allowed_uses = [
+    "key_encipherment",
+    "digital_signature",
+    "server_auth",
+  ]
+}
+
+resource "aws_acm_certificate" "self_signed" {
+  private_key      = tls_private_key.self_signed.private_key_pem
+  certificate_body = tls_self_signed_cert.self_signed.cert_pem
+  tags             = var.common_tags
+}
+
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.main.arn
   port              = "80"
   protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+}
+
+resource "aws_lb_listener" "https" {
+  load_balancer_arn = aws_lb.main.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = aws_acm_certificate.self_signed.arn
 
   default_action {
     type = "forward"
@@ -112,7 +161,7 @@ resource "aws_iam_role_policy" "app_secrets" {
     Statement = [{
       Action   = "secretsmanager:GetSecretValue"
       Effect   = "Allow"
-      Resource = "*" # Best practice: Limit to specific secret ARN
+      Resource = var.database_password_secret_arn
     }]
   })
 }
@@ -150,7 +199,7 @@ resource "aws_launch_template" "main" {
               # SECURE RUNTIME SECRET RETRIEVAL
               # Instead of injecting the password into this script, we fetch it at runtime
               # using the instance's IAM role.
-              DB_PASS=$(aws secretsmanager get-secret-value --secret-id ${var.project_name}-db-password-${var.environment} --query SecretString --output text --region us-east-1)
+              DB_PASS=$(aws secretsmanager get-secret-value --secret-id ${var.project_name}-db-password-${var.environment} --query SecretString --output text --region ${data.aws_region.current.region})
 
               cat << APP > /home/ec2-user/app.py
               from flask import Flask
@@ -177,12 +226,14 @@ resource "aws_launch_template" "main" {
 
 # ASG - BLUE
 resource "aws_autoscaling_group" "blue" {
-  name                = "${var.project_name}-asg-blue"
-  vpc_zone_identifier = var.private_subnet_ids
-  target_group_arns   = [aws_lb_target_group.blue.arn]
-  min_size            = 2
-  max_size            = 4
-  desired_capacity    = 2
+  name                      = "${var.project_name}-asg-blue"
+  vpc_zone_identifier       = var.private_subnet_ids
+  target_group_arns         = [aws_lb_target_group.blue.arn]
+  min_size                  = var.asg_min_size
+  max_size                  = var.asg_max_size
+  desired_capacity          = var.asg_desired_capacity
+  health_check_type         = "ELB"
+  health_check_grace_period = 300
 
   launch_template {
     id      = aws_launch_template.main.id
@@ -198,12 +249,14 @@ resource "aws_autoscaling_group" "blue" {
 
 # ASG - GREEN
 resource "aws_autoscaling_group" "green" {
-  name                = "${var.project_name}-asg-green"
-  vpc_zone_identifier = var.private_subnet_ids
-  target_group_arns   = [aws_lb_target_group.green.arn]
-  min_size            = 0 # Green can be 0 when not deploying
-  max_size            = 4
-  desired_capacity    = 0
+  name                      = "${var.project_name}-asg-green"
+  vpc_zone_identifier       = var.private_subnet_ids
+  target_group_arns         = [aws_lb_target_group.green.arn]
+  min_size                  = 0 # Green can be 0 when not deploying
+  max_size                  = var.asg_max_size
+  desired_capacity          = 0
+  health_check_type         = "ELB"
+  health_check_grace_period = 300
 
   launch_template {
     id      = aws_launch_template.main.id
@@ -244,7 +297,7 @@ resource "aws_iam_role_policy" "rollback" {
     Statement = [{
       Action   = "elasticloadbalancing:ModifyListener"
       Effect   = "Allow"
-      Resource = "*"
+      Resource = aws_lb_listener.https.arn
     }]
   })
 }
@@ -295,7 +348,7 @@ resource "aws_lambda_function" "rollback" {
 
   environment {
     variables = {
-      LISTENER_ARN = aws_lb_listener.http.arn
+      LISTENER_ARN = aws_lb_listener.https.arn
       BLUE_TG_ARN  = aws_lb_target_group.blue.arn
       GREEN_TG_ARN = aws_lb_target_group.green.arn
     }

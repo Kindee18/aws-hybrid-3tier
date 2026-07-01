@@ -10,9 +10,14 @@ variable "vpc_id" {
   type = string
 }
 
-variable "subnet_id" {
-  type = string
-  description = "A private subnet ID for the bastion host"
+variable "bastion_subnet_id" {
+  type        = string
+  description = "A private subnet ID for the bastion host placement"
+}
+
+variable "private_subnet_ids" {
+  type        = list(string)
+  description = "The list of private subnet IDs where VPC Endpoints should span"
 }
 
 variable "instance_type" {
@@ -23,3 +28,9 @@ variable "instance_type" {
 variable "common_tags" {
   type = map(string)
 }
+
+variable "app_sg_id" {
+  type        = string
+  description = "The security group ID of the application instances."
+}
+

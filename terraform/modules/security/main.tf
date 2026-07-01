@@ -1,6 +1,6 @@
 resource "aws_secretsmanager_secret" "db_password" {
-  name        = "${var.project_name}-db-password-${var.environment}"
-  description = "Database master password"
+  name                    = "${var.project_name}-db-password-${var.environment}"
+  description             = "Database master password"
   recovery_window_in_days = 0 # Force delete for demo purposes
 
   tags = var.common_tags

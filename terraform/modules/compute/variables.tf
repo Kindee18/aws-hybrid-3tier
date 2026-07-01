@@ -44,3 +44,28 @@ variable "provided_ami_id" {
   description = "The Golden AMI ID. If provided, overrides the dynamic lookup."
   default     = null
 }
+
+variable "database_password_secret_arn" {
+  type        = string
+  description = "The Secrets Manager secret ARN for the database master password."
+}
+
+variable "asg_min_size" {
+  type        = number
+  description = "The minimum size of the active app Auto Scaling Group"
+  default     = 2
+}
+
+variable "asg_max_size" {
+  type        = number
+  description = "The maximum size of the active app Auto Scaling Group"
+  default     = 4
+}
+
+variable "asg_desired_capacity" {
+  type        = number
+  description = "The desired capacity of the active app Auto Scaling Group"
+  default     = 2
+}
+
+
