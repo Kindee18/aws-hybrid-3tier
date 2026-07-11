@@ -145,6 +145,16 @@ The platform was recently upgraded from a high-quality demo to an **Enterprise-R
 *   **Golden Image Strategy**:
     *   *Change*: Refactored the Compute module to support and prioritize versioned `provided_ami_id` inputs.
     *   *Why*: To prevent "AMI Drift." In production, we never use "the latest" image; we use a hardened, tested "Golden Image" to ensure every server in the fleet is identical and secure.
+*   **Security & Compliance Hardening (Checkov Audited)**:
+    *   *Change*: Upgraded the ALB listener to use `ELBSecurityPolicy-TLS13-1-2-2021-06` and S3 bucket encryption to KMS (`aws/s3`) by default.
+    *   *Why*: To comply with `CKV_AWS_103` and `CKV_AWS_145` standards, ensuring data-in-transit and data-at-rest meet the highest regulatory compliance.
+*   **Conditional CloudFront & Edge Sandbox Optimization**:
+    *   *Change*: Implemented conditionals to bypass CloudFront CDN provisioning in the `dev` environment.
+    *   *Why*: To prevent sandbox account verification limitations (e.g., AWS Support registration blocks) from blocking local developer testing, while retaining high-availability CDN routing in `prod`.
+*   **Zero-Trust Lambda Invoke Auth Fix**:
+    *   *Change*: Restructured the API Gateway Lambda permission policy's `source_arn` to explicitly inject the caller account ID and current region.
+    *   *Why*: Fixed a critical Terraform provider bug where blank account interpolation in execution ARNs led to invocation authorization failures.
+
 
 ## 🔒 Security Posture
 *   **WAF Protected**: All web traffic is filtered by an AWS WAF Web ACL.

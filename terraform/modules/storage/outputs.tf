@@ -1,5 +1,5 @@
 output "cloudfront_domain" {
-  value = aws_cloudfront_distribution.main.domain_name
+  value = length(aws_cloudfront_distribution.main) > 0 ? aws_cloudfront_distribution.main[0].domain_name : "disabled-in-dev"
 }
 
 output "s3_bucket_name" {

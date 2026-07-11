@@ -1,10 +1,9 @@
-checkov:
-  directory:
-    - .
-  quiet: true
-  soft-fail: true
-  download-external-modules: true
-  output: cli
-  exclude-path:
-    - .terraform
-    - modules/tags
+directory:
+  - .
+quiet: true
+soft-fail: true
+download-external-modules: true
+output: cli
+skip-path:
+  - .terraform
+  - modules/tags

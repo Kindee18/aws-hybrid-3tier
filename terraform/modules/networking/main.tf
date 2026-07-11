@@ -17,7 +17,7 @@ resource "aws_flow_log" "main" {
 }
 
 resource "aws_cloudwatch_log_group" "flow_log" {
-  name              = "/aws/vpc-flow-log/${var.project_name}"
+  name              = "/aws/vpc-flow-log/${var.project_name}-${var.environment}"
   retention_in_days = 7
   tags              = var.common_tags
 }
@@ -186,6 +186,18 @@ resource "aws_vpc_security_group_ingress_rule" "db_from_app" {
   from_port                    = 5432
   ip_protocol                  = "tcp"
   to_port                      = 5432
+}
+
+resource "aws_vpc_security_group_egress_rule" "alb_to_any" {
+  security_group_id = aws_security_group.alb.id
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "-1"
+}
+
+resource "aws_vpc_security_group_egress_rule" "app_to_any" {
+  security_group_id = aws_security_group.app.id
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "-1"
 }
 
 resource "aws_wafv2_web_acl" "main" {
